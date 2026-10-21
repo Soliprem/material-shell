@@ -4,8 +4,7 @@ Item {
     id: root
 
     property string icon
-    property color themeAccent
-    property color themeFg
+    required property Colors theme
 
     signal clicked()
 
@@ -17,7 +16,7 @@ Item {
         text: root.icon
         font.pixelSize: 22
         scale: mouse.pressed ? 0.86 : (mouse.containsMouse ? 1.08 : 1.0)
-        color: mouse.containsMouse ? root.themeAccent : root.themeFg
+        color: mouse.containsMouse ? root.theme.accent : root.theme.fg
         opacity: mouse.containsMouse ? 1.0 : 0.75
 
         Behavior on scale { SpringAnimation { spring: 4; damping: 0.4 } }

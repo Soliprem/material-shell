@@ -9,14 +9,9 @@ Rectangle {
     property var notification
     property bool compact: false
     property bool popupMode: false
-    property color themeAccent
-    property color themeSecond
-    property color themeFg
-    property color themeBg
-    property color themeRawBg
+    required property Colors theme
 
     signal dismissRequested(var notification)
-    signal hidePopupRequested(var notification)
 
     readonly property string appName: notification?.appName || "Application"
     readonly property string summary: notification?.summary || "Notification"
@@ -51,16 +46,8 @@ Rectangle {
     }
 
     function preferredAction() {
-        if (!notification || notification.actions.length === 0)
-            return null
-
-        for (let i = 0; i < notification.actions.length; i++) {
-            const action = notification.actions[i]
-            if (action.identifier === "default")
-                return action
-        }
-
-        return notification.actions[0]
+        const actions = notification?.actions ?? []
+        return actions.find(action => action.identifier === "default") ?? actions[0]
     }
 
     function activateNotification() {
@@ -83,16 +70,16 @@ Rectangle {
     width: parent ? parent.width : implicitWidth
     implicitHeight: content.implicitHeight + 24
     radius: 14
-    color: critical
-        ? popupMode ? themeBg : Qt.rgba(themeAccent.r, themeAccent.g, themeAccent.b, 0.15)
-        : popupMode ? themeBg : Qt.rgba(1, 1, 1, 0.06)
+    color: popupMode ? theme.bg
+        : critical ? Qt.rgba(theme.accent.r, theme.accent.g, theme.accent.b, 0.15)
+        : Qt.rgba(1, 1, 1, 0.06)
     border {
         width: critical ? 2 : 1
         color: critical
-            ? root.themeAccent
+            ? root.theme.accent
             : low
-                ? Qt.rgba(root.themeSecond.r, root.themeSecond.g, root.themeSecond.b, 0.35)
-                : Qt.rgba(root.themeFg.r, root.themeFg.g, root.themeFg.b, 0.14)
+                ? Qt.rgba(root.theme.second.r, root.theme.second.g, root.theme.second.b, 0.35)
+                : Qt.rgba(root.theme.fg.r, root.theme.fg.g, root.theme.fg.b, 0.14)
     }
 
     RetainableLock {
@@ -129,7 +116,7 @@ Rectangle {
                 Layout.preferredWidth: 34
                 Layout.preferredHeight: 34
                 radius: 9
-                color: Qt.rgba(root.themeFg.r, root.themeFg.g, root.themeFg.b, 0.08)
+                color: Qt.rgba(root.theme.fg.r, root.theme.fg.g, root.theme.fg.b, 0.08)
                 clip: true
 
                 Image {
@@ -144,7 +131,7 @@ Rectangle {
                 Text {
                     anchors.centerIn: parent
                     text: root.critical ? "!" : "󰂚"
-                    color: root.critical ? root.themeAccent : root.themeSecond
+                    color: root.critical ? root.theme.accent : root.theme.second
                     visible: root.imageSource === ""
                     font {
                         pixelSize: 15
@@ -160,7 +147,7 @@ Rectangle {
                 Text {
                     Layout.fillWidth: true
                     text: root.appName
-                    color: root.themeSecond
+                    color: root.theme.second
                     opacity: 0.78
                     elide: Text.ElideRight
                     font {
@@ -172,7 +159,7 @@ Rectangle {
                 Text {
                     Layout.fillWidth: true
                     text: root.summary
-                    color: root.themeFg
+                    color: root.theme.fg
                     elide: Text.ElideRight
                     font {
                         pixelSize: 13
@@ -190,7 +177,7 @@ Rectangle {
             wrapMode: Text.WrapAtWordBoundaryOrAnywhere
             maximumLineCount: root.compact ? 2 : 5
             elide: Text.ElideRight
-            color: root.themeFg
+            color: root.theme.fg
             opacity: 0.74
             font {
                 pixelSize: 11
@@ -199,7 +186,7 @@ Rectangle {
 
         Image {
             Layout.fillWidth: true
-            Layout.preferredHeight: root.compact ? 82 : 130
+            Layout.preferredHeight: 130
             visible: root.imageSource !== "" && !root.compact
             source: root.imageSource
             fillMode: Image.PreserveAspectCrop
@@ -219,7 +206,7 @@ Rectangle {
                 color: Qt.rgba(1, 1, 1, 0.06)
                 border {
                     width: replyInput.activeFocus ? 1 : 0
-                    color: root.themeAccent
+                    color: root.theme.accent
                 }
 
                 TextInput {
@@ -230,9 +217,9 @@ Rectangle {
                     anchors.rightMargin: 10
                     verticalAlignment: TextInput.AlignVCenter
                     clip: true
-                    color: root.themeFg
-                    selectedTextColor: root.themeRawBg
-                    selectionColor: root.themeAccent
+                    color: root.theme.fg
+                    selectedTextColor: root.theme.rawBg
+                    selectionColor: root.theme.accent
                     font {
                         pixelSize: 11
                     }
@@ -240,7 +227,7 @@ Rectangle {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: root.notification?.inlineReplyPlaceholder || "Reply"
-                        color: root.themeSecond
+                        color: root.theme.second
                         opacity: 0.55
                         visible: replyInput.text === ""
                         font: replyInput.font
@@ -256,13 +243,13 @@ Rectangle {
                 Layout.preferredHeight: 30
                 radius: 8
                 color: sendMouse.containsMouse
-                    ? Qt.rgba(root.themeAccent.r, root.themeAccent.g, root.themeAccent.b, 0.25)
-                    : Qt.rgba(root.themeAccent.r, root.themeAccent.g, root.themeAccent.b, 0.14)
+                    ? Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.25)
+                    : Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.14)
 
                 Text {
                     anchors.centerIn: parent
                     text: "Send"
-                    color: root.themeAccent
+                    color: root.theme.accent
                     font {
                         pixelSize: 10
                         weight: Font.Bold

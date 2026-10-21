@@ -31,14 +31,16 @@ again with `systemctl --user start rice-shell.service` after quitting this one.
 
 Colors are read from `~/.cache/quickshell/colors.json`, or
 `$XDG_CACHE_HOME/quickshell/colors.json` if set. Changes apply automatically.
-The file contains six hex color strings: `rawBg`, `fg`, `warm`, `fresh`, `accent`,
+The file contains six `#RRGGBB` color strings: `rawBg`, `fg`, `warm`, `fresh`, `accent`,
 and `second`. The Matugen template in my
 [nix-config](https://github.com/Soliprem/nix-config/blob/main/hjem/templates/quickshell-colors.json)
 writes this format.
 
 Quick actions are still set up for my desktop, including scripts from
 nix-config. Change them in [qml/shell.qml](qml/shell.qml). The programs they
-launch need to be installed separately.
+launch need to be installed separately. Each action stores its command as an
+argument array, for example `command: ["foot", "btop"]`; arguments containing
+spaces stay intact.
 
 ## Development
 
@@ -52,7 +54,8 @@ From inside the devshell.
 `quickshell --path ./qml ipc call sidebar toggle` to open it,
 or `quickshell --path ./qml kill` to quit.
 
-Run `nix flake check` to build the package and run the tests.
+Run `nix flake check` to build the package and run the QML checks for palette
+validation, action layouts, DND, and media source selection.
 
 ## Credits
 

@@ -12,10 +12,7 @@ Rectangle {
     readonly property var activePlayer: players.includes(selectedPlayer) ? selectedPlayer : (players[0] ?? null)
     readonly property bool hasPlayer: activePlayer !== null
     readonly property bool isPlaying: hasPlayer && activePlayer.playbackState === MprisPlaybackState.Playing
-    property color themeAccent
-    property color themeSecond
-    property color themeFg
-    property color themeRawBg
+    required property Colors theme
 
     Layout.preferredHeight: playerLayout.implicitHeight + 40
     radius: 24
@@ -33,7 +30,6 @@ Rectangle {
         anchors.margins: 20
         spacing: 16
 
-        // use the native picker for MPRIS sources.
         Controls.ComboBox {
             id: sourcePicker
 
@@ -51,7 +47,7 @@ Rectangle {
 
             contentItem: Text {
                 text: sourcePicker.displayText
-                color: root.themeSecond
+                color: root.theme.second
                 font { pixelSize: 12; weight: Font.Medium; letterSpacing: 0.3 }
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
@@ -62,7 +58,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "⌄"
                 font.pixelSize: 18
-                color: root.themeAccent
+                color: root.theme.accent
                 rotation: sourcePicker.popup.visible ? 180 : 0
                 Behavior on rotation { NumberAnimation { duration: 160 } }
             }
@@ -71,7 +67,7 @@ Rectangle {
                 radius: 12
                 color: sourcePicker.down ? "#20ffffff" : sourcePicker.hovered ? "#18ffffff" : "#0cffffff"
                 border.width: 1
-                border.color: sourcePicker.visualFocus ? root.themeAccent : "#0effffff"
+                border.color: sourcePicker.visualFocus ? root.theme.accent : "#0effffff"
                 Behavior on color { ColorAnimation { duration: 160 } }
             }
 
@@ -89,7 +85,7 @@ Rectangle {
 
                 contentItem: Text {
                     text: sourceOption.text
-                    color: sourceOption.index === sourcePicker.currentIndex ? root.themeAccent : root.themeFg
+                    color: sourceOption.index === sourcePicker.currentIndex ? root.theme.accent : root.theme.fg
                     font { pixelSize: 12; weight: Font.Medium }
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
@@ -108,7 +104,7 @@ Rectangle {
                 margins: 8
                 background: Rectangle {
                     radius: 16
-                    color: root.themeRawBg
+                    color: root.theme.rawBg
                     border { width: 1; color: "#20ffffff" }
                 }
                 contentItem: ListView {
@@ -140,22 +136,6 @@ Rectangle {
 
                 readonly property int renderScale: 4
                 readonly property int renderSize: Math.round(width * renderScale)
-                property bool showingA: true
-                property string artUrl: root.activePlayer?.trackArtUrl ?? ""
-
-                onArtUrlChanged: {
-                    if (showingA) {
-                        imgB.source = artUrl
-                        if (imgB.status === Image.Ready)
-                            showingA = false
-                    } else {
-                        imgA.source = artUrl
-                        if (imgA.status === Image.Ready)
-                            showingA = true
-                    }
-                }
-
-                Component.onCompleted: imgA.source = artUrl
 
                 Item {
                     id: artMask
@@ -176,81 +156,64 @@ Rectangle {
                     }
                 }
 
-                Image {
-                    id: imgA
+                Item {
+                    id: artwork
 
                     width: artContainer.renderSize
                     height: artContainer.renderSize
-                    sourceSize.width: artContainer.renderSize
-                    sourceSize.height: artContainer.renderSize
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    smooth: true
-                    mipmap: true
-                    antialiasing: true
                     visible: false
+                    property Image current: firstCover
+                    readonly property string artUrl: root.activePlayer?.trackArtUrl ?? ""
+                    readonly property bool hasCover: artUrl !== "" && current.status === Image.Ready
 
-                    onStatusChanged: {
-                        if (status === Image.Ready && !artContainer.showingA)
-                            artContainer.showingA = true
+                    onArtUrlChanged: {
+                        if (artUrl === "") {
+                            firstCover.source = ""
+                            secondCover.source = ""
+                            return
+                        }
+                        const next = current === firstCover ? secondCover : firstCover
+                        next.source = artUrl
+                        if (next.status === Image.Ready)
+                            current = next
                     }
+
+                    component CoverImage: Image {
+                        anchors.fill: parent
+                        sourceSize.width: artContainer.renderSize
+                        sourceSize.height: artContainer.renderSize
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        smooth: true
+                        mipmap: true
+                        opacity: artwork.current === this ? 1 : 0
+                        onStatusChanged: if (status === Image.Ready) artwork.current = this
+                        Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                    }
+
+                    CoverImage { id: firstCover }
+                    CoverImage { id: secondCover }
                 }
 
                 MultiEffect {
                     anchors.fill: parent
-                    source: imgA
+                    source: artwork
                     maskEnabled: true
                     maskSource: artMask
                     maskThresholdMin: 0.35
                     maskThresholdMax: 1.0
                     maskSpreadAtMin: 0.08
                     maskSpreadAtMax: 0.04
-                    opacity: artContainer.showingA ? 1.0 : 0.0
-                    visible: imgA.status === Image.Ready
-                    Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
-                }
-
-                Image {
-                    id: imgB
-
-                    width: artContainer.renderSize
-                    height: artContainer.renderSize
-                    sourceSize.width: artContainer.renderSize
-                    sourceSize.height: artContainer.renderSize
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    smooth: true
-                    mipmap: true
-                    antialiasing: true
-                    visible: false
-
-                    onStatusChanged: {
-                        if (status === Image.Ready && artContainer.showingA)
-                            artContainer.showingA = false
-                    }
-                }
-
-                MultiEffect {
-                    anchors.fill: parent
-                    source: imgB
-                    maskEnabled: true
-                    maskSource: artMask
-                    maskThresholdMin: 0.35
-                    maskThresholdMax: 1.0
-                    maskSpreadAtMin: 0.08
-                    maskSpreadAtMax: 0.04
-                    opacity: artContainer.showingA ? 0.0 : 1.0
-                    visible: imgB.status === Image.Ready
-                    Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                    visible: artwork.hasCover
                 }
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰎇"
-                    color: root.themeAccent
+                    color: root.theme.accent
                     opacity: 0.7
                     font.pixelSize: 32
-                    visible: imgA.status !== Image.Ready && imgB.status !== Image.Ready
+                    visible: !artwork.hasCover
                 }
 
                 Rectangle {
@@ -272,8 +235,8 @@ Rectangle {
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.activePlayer?.trackTitle ?? "Now playing"
-                    color: root.themeFg
+                    text: root.activePlayer?.trackTitle || "Now playing"
+                    color: root.theme.fg
                     elide: Text.ElideRight
                     font {
                         pixelSize: 17
@@ -284,8 +247,8 @@ Rectangle {
 
                 Text {
                     Layout.fillWidth: true
-                    text: root.activePlayer?.trackArtist ?? "Unknown artist"
-                    color: root.themeSecond
+                    text: root.activePlayer?.trackArtist || "Unknown artist"
+                    color: root.theme.second
                     opacity: 0.65
                     elide: Text.ElideRight
                     font {
@@ -304,8 +267,6 @@ Rectangle {
             radius: 3
             color: progressMouse.containsMouse ? "#2effffff" : "#1cffffff"
 
-            property real currentPos: root.activePlayer ? root.activePlayer.position : 0
-
             Behavior on height { NumberAnimation { duration: 160; easing.type: Easing.OutQuart } }
             Behavior on color { ColorAnimation { duration: 160 } }
 
@@ -313,19 +274,16 @@ Rectangle {
                 interval: 500
                 repeat: true
                 running: root.isPlaying && root.visible
-                onTriggered: {
-                    if (root.activePlayer)
-                        progressBar.currentPos = root.activePlayer.position
-                }
+                onTriggered: root.activePlayer.positionChanged()
             }
 
             Rectangle {
                 width: parent.width * Math.min(1.0, (root.activePlayer && root.activePlayer.length > 0
-                    ? progressBar.currentPos / root.activePlayer.length
+                    ? root.activePlayer.position / root.activePlayer.length
                     : 0))
                 height: parent.height
                 radius: parent.radius
-                color: root.themeAccent
+                color: root.theme.accent
 
                 Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
             }
@@ -336,14 +294,11 @@ Rectangle {
                 anchors.fill: parent
                 anchors.margins: -4
                 hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
+                enabled: root.hasPlayer && root.activePlayer.canSeek && root.activePlayer.positionSupported && root.activePlayer.length > 0
+                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
 
                 onClicked: (mouse) => {
-                    if (root.activePlayer && root.activePlayer.length > 0) {
-                        const newPos = (mouse.x / width) * root.activePlayer.length
-                        root.activePlayer.position = newPos
-                        progressBar.currentPos = newPos
-                    }
+                    root.activePlayer.position = Math.max(0, Math.min(1, mouse.x / width)) * root.activePlayer.length
                 }
             }
         }
@@ -355,35 +310,25 @@ Rectangle {
 
             PlayerIconButton {
                 icon: "󰒮"
-                themeAccent: root.themeAccent
-                themeFg: root.themeFg
+                theme: root.theme
                 onClicked: root.activePlayer?.previous()
             }
 
             Rectangle {
-                id: playButton
-
-                property bool localPlaying: root.isPlaying
-
                 width: 48
                 height: 48
                 radius: 14
-                color: root.themeAccent
+                color: root.theme.accent
                 scale: playMouse.pressed ? 0.92 : (playMouse.containsMouse ? 1.06 : 1.0)
-
-                Connections {
-                    target: root
-                    function onIsPlayingChanged() { playButton.localPlaying = root.isPlaying }
-                }
 
                 Behavior on color { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 Behavior on scale { SpringAnimation { spring: 4; damping: 0.38 } }
 
                 Text {
                     anchors.centerIn: parent
-                    anchors.horizontalCenterOffset: playButton.localPlaying ? 0 : 2
-                    text: playButton.localPlaying ? "󰏤" : "󰐊"
-                    color: root.themeRawBg
+                    anchors.horizontalCenterOffset: root.isPlaying ? 0 : 2
+                    text: root.isPlaying ? "󰏤" : "󰐊"
+                    color: root.theme.rawBg
                     opacity: 0.9
                     font.pixelSize: 20
                 }
@@ -395,17 +340,13 @@ Rectangle {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
 
-                    onClicked: {
-                        playButton.localPlaying = !playButton.localPlaying
-                        root.activePlayer?.togglePlaying()
-                    }
+                    onClicked: root.activePlayer?.togglePlaying()
                 }
             }
 
             PlayerIconButton {
                 icon: "󰒭"
-                themeAccent: root.themeAccent
-                themeFg: root.themeFg
+                theme: root.theme
                 onClicked: root.activePlayer?.next()
             }
         }

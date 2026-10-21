@@ -25,7 +25,7 @@
         installPhase = ''
           runHook preInstall
           mkdir -p "$out/share/material-shell"
-          cp *.qml "$out/share/material-shell/"
+          cp [A-Z]*.qml shell.qml "$out/share/material-shell/"
           install -Dm644 ${./LICENSE} "$out/share/licenses/material-shell/LICENSE"
           makeWrapper ${pkgs.quickshell}/bin/quickshell "$out/bin/material-shell" \
             --prefix PATH : ${pkgs.lib.makeBinPath [pkgs.bash pkgs.coreutils]} \
@@ -53,11 +53,21 @@
       pkgs = pkgsFor system;
     in {
       package = self.packages.${system}.default;
-      media-source =
-        pkgs.runCommand "material-shell-media-source" {
-          nativeBuildInputs = [pkgs.nodejs];
+      shell =
+        pkgs.runCommand "material-shell-checks" {
+          nativeBuildInputs = [pkgs.quickshell pkgs.dbus pkgs.bash pkgs.coreutils];
         } ''
-          node ${./qml}/test-media-source.cjs
+          export QT_QPA_PLATFORM=offscreen
+          export FONTCONFIG_FILE=${pkgs.fontconfig.out}/etc/fonts/fonts.conf
+          export XDG_CACHE_HOME="$TMPDIR/cache"
+          export XDG_RUNTIME_DIR="$TMPDIR/runtime"
+          mkdir -m700 "$XDG_RUNTIME_DIR"
+          timeout 15 dbus-run-session --config-file=${pkgs.dbus}/share/dbus-1/session.conf -- \
+            quickshell --no-color --path ${./qml}/test-shell.qml > test.log 2>&1 \
+            || { cat test.log; exit 1; }
+          cat test.log
+          grep -q 'Shell checks passed' test.log
+          if grep -E '(ERROR|WARN scene)' test.log; then exit 1; fi
           touch "$out"
         '';
     });
@@ -66,7 +76,7 @@
       pkgs = pkgsFor system;
     in {
       default = pkgs.mkShell {
-        packages = [pkgs.quickshell pkgs.coreutils pkgs.nodejs pkgs.alejandra];
+        packages = [pkgs.quickshell pkgs.alejandra];
       };
     });
   };

@@ -4,8 +4,7 @@ Rectangle {
     id: root
 
     property string label
-    property color themeAccent
-    property color themeFg
+    required property color textColor
 
     signal clicked()
 
@@ -13,7 +12,7 @@ Rectangle {
     implicitHeight: 24
     radius: 8
     color: mouse.containsMouse
-        ? Qt.rgba(themeAccent.r, themeAccent.g, themeAccent.b, 0.18)
+        ? Qt.rgba(textColor.r, textColor.g, textColor.b, 0.18)
         : Qt.rgba(1, 1, 1, 0.06)
 
     Behavior on color { ColorAnimation { duration: 140 } }
@@ -22,7 +21,7 @@ Rectangle {
         id: text
         anchors.centerIn: parent
         text: root.label
-        color: root.themeAccent
+        color: root.textColor
         font {
             pixelSize: 10
             weight: Font.Bold

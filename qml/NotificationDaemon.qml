@@ -7,7 +7,6 @@ Item {
 
     property alias trackedNotifications: server.trackedNotifications
     property alias popupNotifications: popupModel
-    property int popupDefaultTimeoutMs: 5000
     property int popupMaxCount: 4
     property bool doNotDisturb: false
 

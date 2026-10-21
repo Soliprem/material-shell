@@ -5,13 +5,13 @@ import Quickshell.Io
 Item {
     id: root
 
-    property string fg: "#ffffff"
-    property string bg: "#66000000"
-    property string rawBg: "#000000"
-    property string accent: "#ffffff"
-    property string second: "#ffffff"
-    property string warm: "#ffffff"
-    property string fresh: "#ffffff"
+    property color fg: "#ffffff"
+    readonly property color bg: Qt.rgba(rawBg.r, rawBg.g, rawBg.b, 0.6)
+    property color rawBg: "#000000"
+    property color accent: "#ffffff"
+    property color second: "#ffffff"
+    property color warm: "#ffffff"
+    property color fresh: "#ffffff"
 
     function colorFilePath() {
         const cacheHome = Quickshell.env("XDG_CACHE_HOME") || Quickshell.env("HOME") + "/.cache"
@@ -23,18 +23,14 @@ Item {
     }
 
     function apply(rawColors) {
-        if (!rawColors || rawColors.trim() === "")
-            return
-
         try {
             const c = JSON.parse(rawColors)
-            root.rawBg  = c.rawBg
-            root.fg     = c.fg
-            root.warm   = c.warm
-            root.fresh  = c.fresh
-            root.accent = c.accent
-            root.second = c.second
-            root.bg     = "#99" + c.rawBg.slice(1)
+            const keys = ["rawBg", "fg", "warm", "fresh", "accent", "second"]
+            if (!keys.every(key => /^#[0-9a-f]{6}$/i.test(c?.[key])))
+                return
+
+            for (const key of keys)
+                root[key] = c[key]
         } catch (e) {}
     }
 
@@ -47,7 +43,6 @@ Item {
         printErrors: false
 
         onLoaded: root.apply(text())
-        onTextChanged: root.apply(text())
         onFileChanged: reload()
     }
 }

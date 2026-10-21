@@ -6,13 +6,9 @@ import Quickshell.Wayland
 PanelWindow {
     id: root
 
-    property var notificationModel
+    required property var notificationModel
     property int popupDefaultTimeoutMs: 5000
-    property color themeAccent
-    property color themeSecond
-    property color themeFg
-    property color themeBg
-    property color themeRawBg
+    required property Colors theme
 
     BackgroundEffect.blurRegion: Region {
         item: root.contentItem
@@ -46,7 +42,7 @@ PanelWindow {
     implicitWidth: 360
     implicitHeight: popupColumn.implicitHeight
     color: "transparent"
-    visible: notificationModel && notificationModel.values.length > 0
+    visible: notificationModel.values.length > 0
 
     ColumnLayout {
         id: popupColumn
@@ -66,11 +62,7 @@ PanelWindow {
                 notification: modelData
                 compact: true
                 popupMode: true
-                themeAccent: root.themeAccent
-                themeSecond: root.themeSecond
-                themeFg: root.themeFg
-                themeBg: root.themeBg
-                themeRawBg: root.themeRawBg
+                theme: root.theme
 
                 onDismissRequested: (notification) => root.dismissNotification(notification)
 

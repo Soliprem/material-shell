@@ -4,11 +4,8 @@ Item {
     id: root
 
     property string icon
-    property string action
-    property string binary
-    property string args
     property color roleColor
-    property color themeFg
+    required property Colors theme
 
     signal clicked()
 
@@ -65,7 +62,7 @@ Item {
             text: root.icon
             color: mouse.containsMouse
                 ? root.roleColor
-                : Qt.rgba(root.themeFg.r, root.themeFg.g, root.themeFg.b, 0.55)
+                : Qt.rgba(root.theme.fg.r, root.theme.fg.g, root.theme.fg.b, 0.55)
             scale: mouse.pressed ? 0.88 : (mouse.containsMouse ? 1.10 : 1.0)
             font {
                 pixelSize: 21

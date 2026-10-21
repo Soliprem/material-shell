@@ -4,19 +4,12 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    property color themeAccent
-    property color themeSecond
-    property color themeFg
-    property color themeBg
-    property color themeRawBg
-    property color themeFresh
-    property color themeWarm
+    required property Colors theme
 
-    property string batteryPercent
-    property string batteryIcon
+    property bool doNotDisturb
 
-    property var buttonModel
-    property var notificationModel
+    required property var buttonModel
+    required property var notificationModel
 
     signal requestCmd(var cmdArray)
     signal requestHide()
@@ -31,10 +24,7 @@ Item {
 
         SidebarHeader {
             Layout.fillWidth: true
-            themeAccent: root.themeAccent
-            themeSecond: root.themeSecond
-            batteryIcon: root.batteryIcon
-            batteryPercent: root.batteryPercent
+            theme: root.theme
         }
 
         SidebarActions {
@@ -42,11 +32,8 @@ Item {
             Layout.preferredHeight: 112
 
             buttonModel: root.buttonModel
-            themeAccent: root.themeAccent
-            themeSecond: root.themeSecond
-            themeFg: root.themeFg
-            themeFresh: root.themeFresh
-            themeWarm: root.themeWarm
+            doNotDisturb: root.doNotDisturb
+            theme: root.theme
 
             onRequestCmd: (cmd) => root.requestCmd(cmd)
             onRequestHide: root.requestHide()
@@ -58,10 +45,7 @@ Item {
 
             Layout.fillWidth: true
 
-            themeAccent: root.themeAccent
-            themeSecond: root.themeSecond
-            themeFg: root.themeFg
-            themeRawBg: root.themeRawBg
+            theme: root.theme
         }
 
         NotificationCenter {
@@ -73,11 +57,7 @@ Item {
 
             notificationModel: root.notificationModel
             collapsedHeight: mediaCard.visible ? mediaCard.height + 24 : 220
-            themeAccent: root.themeAccent
-            themeSecond: root.themeSecond
-            themeFg: root.themeFg
-            themeBg: root.themeBg
-            themeRawBg: root.themeRawBg
+            theme: root.theme
 
             onDismissNotification: (notification) => root.requestDismissNotification(notification)
             onClearRequested: root.requestClearNotifications()

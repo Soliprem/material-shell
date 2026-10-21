@@ -4,18 +4,14 @@ import QtQuick.Layouts
 Rectangle {
     id: root
 
-    property var notificationModel
+    required property var notificationModel
     property bool expanded: false
     property real collapsedHeight: 240
-    property color themeAccent
-    property color themeSecond
-    property color themeFg
-    property color themeBg
-    property color themeRawBg
+    required property Colors theme
 
-    readonly property int notificationCount: notificationModel ? notificationModel.values.length : 0
+    readonly property int notificationCount: orderedNotifications.length
     readonly property var orderedNotifications:
-        notificationModel ? [...notificationModel.values].reverse() : []
+        [...notificationModel.values].reverse()
 
     signal dismissNotification(var notification)
     signal clearRequested()
@@ -40,7 +36,7 @@ Rectangle {
             Text {
                 Layout.fillWidth: true
                 text: "Notifications"
-                color: root.themeFg
+                color: root.theme.fg
                 font {
                     pixelSize: 13
                     weight: Font.Bold
@@ -51,13 +47,13 @@ Rectangle {
                 Layout.preferredWidth: Math.max(24, countText.implicitWidth + 12)
                 Layout.preferredHeight: 22
                 radius: 8
-                color: Qt.rgba(root.themeAccent.r, root.themeAccent.g, root.themeAccent.b, 0.16)
+                color: Qt.rgba(root.theme.accent.r, root.theme.accent.g, root.theme.accent.b, 0.16)
 
                 Text {
                     id: countText
                     anchors.centerIn: parent
                     text: root.notificationCount
-                    color: root.themeAccent
+                    color: root.theme.accent
                     font {
                         pixelSize: 10
                         weight: Font.Bold
@@ -67,15 +63,13 @@ Rectangle {
 
             TextButton {
                 label: root.expanded ? "Show less" : "Show more"
-                themeAccent: root.themeAccent
-                themeFg: root.themeFg
+                textColor: root.theme.accent
                 onClicked: root.expanded = !root.expanded
             }
 
             TextButton {
                 label: "Clear"
-                themeAccent: root.themeSecond
-                themeFg: root.themeFg
+                textColor: root.theme.second
                 onClicked: root.clearRequested()
             }
         }
@@ -98,12 +92,7 @@ Rectangle {
                 width: ListView.view.width
                 notification: modelData
                 compact: !root.expanded
-                popupMode: false
-                themeAccent: root.themeAccent
-                themeSecond: root.themeSecond
-                themeFg: root.themeFg
-                themeBg: root.themeBg
-                themeRawBg: root.themeRawBg
+                theme: root.theme
 
                 onDismissRequested: (notification) => root.dismissNotification(notification)
             }
